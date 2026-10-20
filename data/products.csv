@@ -1,0 +1,61 @@
+product_id,name,category,price_mur ,stock_qty,last_updated
+1,Gadjak Mix 200g,Snacks,85,120,2026-10-01
+2,Dholl Puri Pack (6 pcs),Ready Meals,150,40,2026-10-02
+3,Vanilla Tea 100g,Drinks,"1,250",15,02/10/2026
+4,Chilli Paste Jar,condiments,95,,2026-10-03
+5,Coconut Biscuits,snacks,60,200,2026-10-03
+5,Coconut Biscuits,snacks,60,200,2026-10-03
+6,  Farata Frozen x10  ,Frozen,Rs 175,35,2026-10-04
+7,"Rice, Basmati 5kg",Groceries,420,80,4 Oct 2026
+8,Pâte de Piment 250g,Condiments,110,60,2026/10/05
+9,Thé à la Vanille (Bois Chéri) 50 bags,drinks ,185,N/A,2026-10-05
+10,Sugar Cane Juice 1L,Drinks,MUR 65,90,05-10-2026
+11,Mango Achard 300g,Condiments,95.00,45,2026-10-06
+12,Fresh Pineapple,Fruit & Veg,45,-3,2026-10-06
+13,Lychee 1kg,Fruit and Veg,220,25,2026-10-07
+14,Gâteau Piment x12,Snacks,70,0,2026-10-07
+15,Dholl Puri Pack (6 pcs),Ready Meals,150,40,2026-10-02
+16,Chocolate Bar 100g,Sweets,55,150,
+17,Mineral Water 1.5L,DRINKS,25,500,2026-10-08
+18,Pepsi 1.5L,Drinks,,120,2026-10-08
+19,Ice Cream Vanilla 1L,Frozen,195,12.0,2026-10-09
+20,Bread Loaf,Bakery,35,out of stock,2026-10-09
+,Baguette,Bakery,20,60,2026-10-09
+21,Milk UHT 1L,Dairy,48,300,31/02/2026
+22,Cheddar Cheese 200g,dairy,165,40,10/10/2026
+23,Eggs (Tray of 30),Dairy,210,25,2026-10-10
+24,Chicken Sausages 500g,Frozen,-150,30,2026-10-10
+25,Fish Vindaye 400g,Ready Meals,240,18,2026-10-11
+26,Mine Frite Instant,Ready meals,45,95,11 Oct 2026
+27,Crisps Salt & Vinegar,Snaks,40,110,2026-10-11
+28,Peanuts Roasted 250g,Snacks,65,70,2026-10-12
+
+29,Cooking Oil 2L,Groceries,"2,150",30,12/10/2026
+30,Flour 1kg,groceries,38,200,2026-10-12
+31,Lentils (Dholl) 1kg,Groceries,80,150,2026-10-13
+32,Tomato Paste 400g,Condiments,42,,2026-10-13
+33,Soy Sauce 500ml,Condiments,free,20,2026-10-13
+34,Toilet Paper x4,Household,95,100,2026-10-14
+35,Dish Soap 750ml,Household,75,85,2026-10-14
+36,Laundry Powder 2kg,household,310,40,14/10/2026
+37,Rum Bottle 70cl,Alcohol,650,15,2026-10-15
+38,Phoenix Beer 330ml,Alcohol,60,240,2026-10-15
+38,Phoenix Beer 330ml,Alcohol,60,240,2026-10-15
+39,Banana (per kg),,55,50,2026-10-15
+40,Papaya,Fruit & Veg,40,22,2026-10-16
+41,Carrots 1kg,Fruit & Veg,60,35,2026-10-16
+41,Potatoes 1kg,Fruit & Veg,48,90,2026-10-16
+42,Onions 1kg,Fruit & Veg,52,110,16-10-2026
+43,Garlic 250g,Fruit & Veg,45,40,2026-10-17
+44,"Coffee ""Premium"" 200g",Drinks,275,30,2026-10-17
+45,Juice Orange 1L,Drinks,85,75,2026-10-17
+46,Yoghurt Strawberry x4,Dairy,120,60,17 Oct 2026
+47,Butter 250g,Dairy,145,0,2026-10-18
+48,Samoussa Frozen x20,Frozen,180,28,2026-10-18
+49,Napolitaine x6,Sweets,90,45,2026-10-18
+50,Toothpaste 100ml,Household,65,70,2026-10-19
+51,  coconut biscuits  ,Snacks,60,200,2026-10-03
+52,Shampoo 400ml,Personal Care,210,35,2026-10-19
+53,Soap Bar x3,Personal care,85,90,19/10/2026
+54,Baby Wipes x80,Baby,130,25,2026-10-20
+55,Nappies Size 3 x40,Baby,595,10,2026-10-20
