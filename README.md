@@ -1,6 +1,8 @@
 # IslandMart DB
 IslandMart is a fictional goods shop in Mauritius, so this project was built to practice using Docker to run a database and connect multiple database GUIs to it. In this case, we have pgAdmin and DBeaver, both connected to one PostgreSQL database. It also loads cleaned data in the database using one of the 3 pipeline design types, which is ETL.
 
+Next, I've been able to use a mock APi to pulll dummy store entires, so as to see practically how to fetch the data and load them in pagination as json data.
+
 ## Stack
 Postgres 17 and pgAdmin in Docker Compose, Python (pandas + SQLAlchemy), uv.
 
@@ -21,3 +23,11 @@ The reason why I used ETL, instead of Zero-ETL or ELT, was because I was not pla
 - The port 5432 clashed with my Windows PostgreSQL 18, and hence I had to change my port to another port that was not in use.
 - Before, I didn't understand why pgAdmin uses `db`, but DBeaver uses `localhost`, but I later
 understood that it's because DBeaver is the one that is installed on the PC, while pgAdmin runs inside its own Docker container, so it reaches Postgres by the service name `db`.
+
+## Supplier feed (API extract)
+  
+A new file called `fetch_supplier_products.py` was created to help in fetching, and creating the json file sto keep the data in segements.
+
+I have added retry function to ensure that if an error code which is retryable happens, instead of crashing it tries again, until either it fins a non-retryable error code or it reache the maximum trial times.
+
+How to run: `uv run fetch_supplier_products.py`
