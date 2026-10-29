@@ -69,3 +69,7 @@ I asked the same question (revenue per product) three ways:
 DuckDB is made for analytics (OLAP), while Postgres is made for an app's day-to-day reads and writes (OLTP), so I'll keep using both for different jobs.
 
 How to run: `uv run duckdb_analytics.py` (run `compare_formats.py` first, since it creates the Parquet file)
+
+## Star schema
+
+I designed a star schema for IslandMart's sales: one fact table (FACT_SALES) and four dimensions (date, product, store and customer, where customer keeps its history with SCD Type 2). See [docs/star_schema.md](docs/star_schema.md).
