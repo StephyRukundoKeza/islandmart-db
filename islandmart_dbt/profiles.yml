@@ -1,0 +1,6 @@
+islandmart_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../warehouse/islandmart.duckdb

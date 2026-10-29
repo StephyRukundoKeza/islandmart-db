@@ -5,3 +5,4 @@ logs/
 data/formats/
 __pycache__/
 *.pyc
+warehouse/

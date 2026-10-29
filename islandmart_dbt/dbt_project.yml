@@ -1,0 +1,16 @@
+name: 'islandmart_dbt'
+
+profile: 'islandmart_dbt'
+
+seed-paths: ["seeds"]
+model-paths: ["models"]
+macro-paths: ["macros"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+
+models:
+  islandmart_dbt:
+    staging:
+      +materialized: view

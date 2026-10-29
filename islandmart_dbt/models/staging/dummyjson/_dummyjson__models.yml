@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: stg_dummyjson__products
+    description: One row per product, cleaned from the dlt raw table.
+    columns:
+      - name: product_id
+        data_tests:
+          - unique
+          - not_null
+      - name: title
+        data_tests:
+          - not_null
+      - name: availability_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['In Stock', 'Low Stock', 'Out of Stock']
+
+  - name: stg_dummyjson__product_reviews
+    description: One row per review. Reviewer emails are not kept.
+    columns:
+      - name: product_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_dummyjson__products')
+                field: product_id
+
+  - name: stg_dummyjson__product_tags
+    description: One row per product tag.
+    columns:
+      - name: product_id
+        data_tests:
+          - not_null

@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: dummyjson
+    schema: raw_dummyjson
+    description: DummyJSON products, loaded by dlt (python/dlt_dummyjson.py)
+    tables:
+      - name: products
+      - name: products__reviews
+      - name: products__tags

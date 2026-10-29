@@ -116,3 +116,17 @@ How to run:
 - `uv run python/incremental_supplier_products.py`
 - `uv run python/incremental_supplier_products.py --since 2026-08-01` (backfill)
 - `uv run python/incremental_supplier_products.py --show-sql` (see the SQL built from the contract)
+
+## dlt + dbt (DummyJSON -> DuckDB -> clean views)
+
+For this part, I was learning how to do the ELT work fast and efficiently. It's through using the dbt and dlt libraries, which save data to your database. In this case I was using DuckDB.
+
+I have learned that dlt does the E and L (extraction and loading), while dbt does the transforming and makes your data into clean views. Hence, at the end I used DBeaver to see my cleaned data, without writing Python files to clean the data.
+
+I have learned the importance of using those libraries instead of writing the extraction, loading and transformation Python files myself. They do them automatically by themselves, and as the programmer, all I am left with is deciding the configuration and where the data goes. Without forgetting that I write the SQL files as well, but the remaining tasks are done by those libraries.
+
+Even though I had one source and a few tables, I learned that dbt and dlt are mostly useful when one is working on very big projects, like fetching data from many sources and having thousands of tables.
+
+How to run:
+- `uv run python/dlt_dummyjson.py`
+- `cd islandmart_dbt` then `dbt build`
