@@ -4,7 +4,7 @@ IslandMart is a fictional goods shop in Mauritius, so this project was built to 
 Next, I've been able to use a mock API to pull dummy store entries, so as to see practically how to fetch the data page by page (pagination) and save it as JSON files.
 
 ## Stack
-Postgres 17 and pgAdmin in Docker Compose, Python (pandas + SQLAlchemy + requests + pyarrow), DuckDB, uv.
+Postgres 17 and pgAdmin in Docker Compose, Python (pandas + SQLAlchemy + requests + pyarrow + PyYAML), DuckDB, uv.
 
 ## Pipeline design: ETL
 The reason why I used ETL, instead of Zero-ETL or ELT, was because I was not planning in any way to use the data which I omitted. So, cleaning the data and having it in my database clean seems more convenient for me.
@@ -13,7 +13,7 @@ The reason why I used ETL, instead of Zero-ETL or ELT, was because I was not pla
 1. Copy `.env.example` to `.env` and fill in the values
 2. `docker compose up -d`
 3. `uv sync`
-4. `uv run load_products.py`
+4. `uv run python/load_products.py`
 
 ## Cleaning results
 59 rows read, 54 loaded: 1 row without an id dropped, 4 duplicates removed,
@@ -30,7 +30,7 @@ A new file called `fetch_supplier_products.py` was created to help in fetching, 
 
 I have added a retry function to ensure that if an error code which is retryable happens, instead of crashing it tries again, until it either succeeds or reaches the maximum number of tries. If the error code is not retryable (like 404), it stops straight away.
 
-How to run: `uv run fetch_supplier_products.py`
+How to run: `uv run python/fetch_supplier_products.py`
 
 ## What I learned in SQL
 
@@ -52,7 +52,7 @@ I also learned the usage of indexes. Indexes allow a system to make queries with
 
 Parquet also kept the column types (like dates), while the CSV came back with dates as plain text. Parquet can also read only the columns I need, which makes it faster.
 
-How to run: `uv run compare_formats.py`
+How to run: `uv run python/compare_formats.py`
 
 ## Analytics with DuckDB
 
@@ -68,8 +68,33 @@ I asked the same question (revenue per product) three ways:
 
 DuckDB is made for analytics (OLAP), while Postgres is made for an app's day-to-day reads and writes (OLTP), so I'll keep using both for different jobs.
 
-How to run: `uv run duckdb_analytics.py` (run `compare_formats.py` first, since it creates the Parquet file)
+How to run: `uv run python/duckdb_analytics.py` (run `compare_formats.py` first, since it creates the Parquet file)
 
 ## Star schema
 
 I designed a star schema for IslandMart's sales: one fact table (FACT_SALES) and four dimensions (date, product, store and customer, where customer keeps its history with SCD Type 2). See [docs/star_schema.md](docs/star_schema.md).
+
+## ETL vs ELT (same supplier data, loaded twice)
+
+I loaded the same 194 supplier products two ways:
+- `python/etl_supplier_products.py`: cleaned in Python with pandas, following the rules in `contracts/supplier_products.yaml`, then loaded only the clean table.
+- `python/elt_supplier_products.py`: loaded every product as raw JSON (JSONB) into `raw.supplier_products`, then cleaned it with SQL in `sql/elt_supplier_products.sql`.
+
+Both gave 194 rows, and comparing them with `EXCEPT` found 0 differences.
+
+| | ETL | ELT |
+|---|---|---|
+| Time (194 rows) | 0.22 s | 0.14 s |
+| Where the cleaning lives | Python + data contract | SQL |
+| Raw data kept? | No (16 of 27 columns dropped) | Yes, every field |
+| Re-clean without calling the API? | No | Yes, rerun the SQL |
+| Privacy | Sensitive fields never stored | Everything is stored first |
+
+What I noticed:
+- The ELT pipeline looked faster than the ETL, but I have done some research and found that ETL can be faster when one only needs a small part of the data, because less data is moved and stored. With only 194 rows, most of the time here is fixed overhead.
+
+When I'd pick each one:
+- ETL when the data has sensitive fields (like phone numbers) that should never be stored, or when I know exactly which columns I need.
+- ELT when I want to keep everything and might want to clean it differently later.
+
+How to run: `uv run python/etl_supplier_products.py` and `uv run python/elt_supplier_products.py`

@@ -1,0 +1,62 @@
+# Data contract for the supplier products API.
+# Every decision about a column lives here, not in the Python code.
+#   rename:       new column name (if different)
+#   strip:        trim spaces from text
+#   fill_missing: value to use when the field is empty
+#   round:        decimal places
+#   type:         datetime -> convert to a UTC timestamp
+
+source: supplier_products
+target_table: supplier_products_etl
+key: id
+
+keep:
+  id:
+    rename: product_id
+    reason: unique key to join and upsert on
+  title:
+    strip: true
+    reason: product name shown in reports
+  category:
+    reason: group sales by category
+  brand:
+    fill_missing: Unknown
+    reason: group by brand
+  price:
+    round: 2
+    reason: needed to calculate revenue
+  discountPercentage:
+    rename: discount_pct
+    round: 2
+    reason: needed for discount analysis
+  rating:
+    reason: compare product quality
+  stock:
+    reason: spot low or empty stock
+  availabilityStatus:
+    rename: availability
+    reason: In Stock / Low Stock / Out of Stock filter
+  sku:
+    reason: supplier's own product code, to match orders
+  meta.updatedAt:
+    rename: updated_at
+    type: datetime
+    reason: when the product last changed (our watermark)
+
+drop:
+  description: long free text, not used in analytics
+  tags: list of words, would need its own table
+  reviews: list of reviews, would need its own table
+  images: image links, not data we analyse
+  thumbnail: image link, not data we analyse
+  dimensions.width: shipping size, not needed for sales
+  dimensions.height: shipping size, not needed for sales
+  dimensions.depth: shipping size, not needed for sales
+  weight: shipping detail, not needed for sales
+  shippingInformation: text for customers, not analysed
+  warrantyInformation: text for customers, not analysed
+  returnPolicy: text for customers, not analysed
+  minimumOrderQuantity: supplier ordering rule, not needed yet
+  meta.createdAt: we only track the latest change (updatedAt)
+  meta.barcode: duplicate identifier, we already have id and sku
+  meta.qrCode: image link, not data we analyse
