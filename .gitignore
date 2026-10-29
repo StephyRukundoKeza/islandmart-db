@@ -3,3 +3,5 @@
 data/raw/
 logs/
 data/formats/
+__pycache__/
+*.pyc
