@@ -98,3 +98,21 @@ When I'd pick each one:
 - ELT when I want to keep everything and might want to clean it differently later.
 
 How to run: `uv run python/etl_supplier_products.py` and `uv run python/elt_supplier_products.py`
+
+## Incremental loader (watermark)
+
+`python/incremental_supplier_products.py` only loads products whose `updatedAt` is newer than the last successful run. The bookmark (watermark) is saved in the `etl_watermarks` table, and it only moves forward after the load succeeds, in the same transaction. Loading uses upserts, so re-runs and backfills never create duplicates.
+
+The table and the upsert are built from `contracts/supplier_products.yaml`, so adding a column to the contract is enough; the Python code doesn't change.
+
+| Test | Result |
+|---|---|
+| First run | 194 rows loaded |
+| Second run | 0 rows (nothing new) |
+| One product changed | 1 row upserted, still 194 rows |
+| Backfill from 2026-08-01 | rows reloaded, 0 duplicates, watermark not moved back |
+
+How to run:
+- `uv run python/incremental_supplier_products.py`
+- `uv run python/incremental_supplier_products.py --since 2026-08-01` (backfill)
+- `uv run python/incremental_supplier_products.py --show-sql` (see the SQL built from the contract)

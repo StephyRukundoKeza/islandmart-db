@@ -5,42 +5,58 @@
 #   fill_missing: value to use when the field is empty
 #   round:        decimal places
 #   type:         datetime -> convert to a UTC timestamp
+#   sql_type:     column type in Postgres (used by the incremental loader)
 
 source: supplier_products
 target_table: supplier_products_etl
 key: id
 
+incremental:
+  target_table: supplier_products
+  watermark: updated_at
+
 keep:
   id:
     rename: product_id
+    sql_type: INT
     reason: unique key to join and upsert on
   title:
     strip: true
+    sql_type: TEXT NOT NULL
     reason: product name shown in reports
   category:
+    sql_type: TEXT
     reason: group sales by category
   brand:
     fill_missing: Unknown
+    sql_type: TEXT
     reason: group by brand
   price:
     round: 2
+    sql_type: NUMERIC(10,2)
     reason: needed to calculate revenue
   discountPercentage:
     rename: discount_pct
     round: 2
+    sql_type: NUMERIC(5,2)
     reason: needed for discount analysis
   rating:
+    sql_type: NUMERIC(3,2)
     reason: compare product quality
   stock:
+    sql_type: INT
     reason: spot low or empty stock
   availabilityStatus:
     rename: availability
+    sql_type: TEXT
     reason: In Stock / Low Stock / Out of Stock filter
   sku:
+    sql_type: TEXT
     reason: supplier's own product code, to match orders
   meta.updatedAt:
     rename: updated_at
     type: datetime
+    sql_type: TIMESTAMPTZ NOT NULL
     reason: when the product last changed (our watermark)
 
 drop:
