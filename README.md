@@ -4,7 +4,7 @@ IslandMart is a fictional goods shop in Mauritius, so this project was built to 
 Next, I've been able to use a mock API to pull dummy store entries, so as to see practically how to fetch the data page by page (pagination) and save it as JSON files.
 
 ## Stack
-Postgres 17 and pgAdmin in Docker Compose, Python (pandas + SQLAlchemy + requests + pyarrow + PyYAML), DuckDB, uv.
+Postgres 17 and pgAdmin in Docker Compose, Python (pandas + SQLAlchemy + requests + pyarrow + PyYAML), dlt, dbt, DuckDB, uv.
 
 ## Pipeline design: ETL
 The reason why I used ETL, instead of Zero-ETL or ELT, was because I was not planning in any way to use the data which I omitted. So, cleaning the data and having it in my database clean seems more convenient for me.
@@ -72,7 +72,7 @@ How to run: `uv run python/duckdb_analytics.py` (run `compare_formats.py` first,
 
 ## Star schema
 
-I designed a star schema for IslandMart's sales: one fact table (FACT_SALES) and four dimensions (date, product, store and customer, where customer keeps its history with SCD Type 2). See [docs/star_schema.md](docs/star_schema.md).
+I designed a star schema for IslandMart's sales: one fact table (fct_orders) and four dimensions (date, product, store and customer, where customer keeps its history with SCD Type 2). See [docs/star_schema.md](docs/star_schema.md).
 
 ## ETL vs ELT (same supplier data, loaded twice)
 
@@ -130,3 +130,41 @@ Even though I had one source and a few tables, I learned that dbt and dlt are mo
 How to run:
 - `uv run python/dlt_dummyjson.py`
 - `cd islandmart_dbt` then `dbt build`
+
+## Star schema in dbt (staging -> intermediate -> marts)
+
+Previously, I had created a Lucidchart diagram showing the star schema, which is one of the most efficient and easy ways for data users (e.g. data analysts and scientists) to query transformed data.
+
+Hence, I have now implemented the star schema in dbt, and I have learned that for ELT pipelines, the best way to implement dbt is following a certain pattern, which is staging, to intermediate, and lastly marts (the star schema in my database).
+
+### Where the data comes from
+- `sql/01_setup_customers.sql` adds 500 customers (Mauritian towns and districts) to Postgres and links every sale to a customer and a store.
+- `python/dlt_islandmart_postgres.py` loads products, customers and sales from Postgres into DuckDB (`raw_islandmart`) with dlt: products are replaced, customers are loaded incrementally on `updated_at` and merged, sales are loaded incrementally on `sale_id` and appended. `--refresh` rebuilds everything from scratch.
+- Seeds: `stores.csv` (5 stores) and `mauritius_public_holidays_2026.csv`.
+
+### Layers
+| Layer | Models | What it does |
+|---|---|---|
+| Staging | `stg_islandmart__products`, `stg_islandmart__sales`, `stg_islandmart__customers` | This part is in charge of the general clean-up, like fixing data types, renaming columns, removing the duplicate product, and removing or hashing personal data. |
+| Snapshot | `customers_snapshot` | This allows the company not to lose important information when, for instance, a client's data changes (e.g. location). A new row is added only when the client's details change, and the old rows are kept as history, to be used when needed. |
+| Intermediate | `int_sales_with_customer_versions` | Here is where some business logic starts to come in, e.g. matching sales with their customers. |
+| Marts | `fct_orders`, `dim_date`, `dim_product`, `dim_customer`, `dim_store` | This is the last part, which organises the data into dimensions and a fact table to make querying the data easier. |
+
+Grain of `fct_orders`: one row per product line in a sale.
+
+### SCD Type 2 (customer history)
+While building the star schema in dbt, I wanted to see what happens when a client changes location. Because I had added snapshots, both the data before and after relocating were kept: customer 42's sales before 1 June 2026 still count under Curepipe, and the ones after count under Grand Baie.
+
+### Tests
+- Generic tests: `unique`, `not_null`, `accepted_values`, `relationships` (every key in `fct_orders` exists in its dimension).
+- Singular tests: amount = quantity x price, and exactly one current version per customer.
+- Unit test: staging keeps the most recently updated row when a product appears twice.
+
+The reason tests were added to this project is to make it easy to catch mistakes, so a data engineer can see when the rules they set are broken much faster, before bad data reaches the marts.
+
+### How to run
+1. `docker compose up -d`
+2. Run `sql/00_setup_sales.sql`, then `sql/01_setup_customers.sql` in Postgres
+3. `uv run python/dlt_islandmart_postgres.py`
+4. `cd islandmart_dbt`, then `dbt seed` and `dbt build`
+5. `dbt docs generate` and `dbt docs serve` to see the lineage

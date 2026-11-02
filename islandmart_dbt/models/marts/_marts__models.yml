@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: One row per day of 2026, with Mauritian public holidays.
+    columns:
+      - name: date_key
+        description: Date as a number, e.g. 20261102.
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_product
+    description: One row per product.
+    columns:
+      - name: product_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_store
+    description: One row per IslandMart store (from the stores seed).
+    columns:
+      - name: store_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_customer
+    description: One row per customer version (SCD Type 2). is_current marks the latest version.
+    columns:
+      - name: customer_key
+        description: Surrogate key, one per customer version (dbt_scd_id).
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_orders
+    description: "Grain: one row per product line in a sale. Amounts in Mauritian rupees."
+    columns:
+      - name: sale_id
+        data_tests:
+          - unique
+          - not_null
+      - name: date_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: product_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_key
+      - name: store_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_key
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_key

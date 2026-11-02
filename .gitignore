@@ -6,3 +6,4 @@ data/formats/
 __pycache__/
 *.pyc
 warehouse/
+*.duckdb

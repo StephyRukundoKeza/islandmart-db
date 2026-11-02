@@ -18,6 +18,7 @@ import os
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from sqlalchemy import Numeric
 
 # 1. Load credentials from .env
 load_dotenv()
@@ -92,7 +93,7 @@ if not conflicts.empty:
     print(conflicts.to_string(index=False))
 
 # 5. Load (replace = running the script again gives the same result)
-df.to_sql("products", engine, if_exists="replace", index=False)
+df.to_sql("products", engine, if_exists="replace", index=False, dtype={"price_mur": Numeric(10, 2)})
 
 # 6. Verify: does the database agree with the DataFrame?
 with engine.connect() as connection:

@@ -1,0 +1,8 @@
+snapshots:
+  - name: customers_snapshot
+    relation: ref('stg_islandmart__customers')
+    description: Full history of every customer (SCD Type 2). A new row is added each time a customer's details change.
+    config:
+      unique_key: customer_id
+      strategy: timestamp
+      updated_at: updated_at

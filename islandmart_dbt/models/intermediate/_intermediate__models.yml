@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: int_sales_with_customer_versions
+    description: Each sale matched to the customer version (from the SCD2 snapshot) that was valid on the sale date.
+    columns:
+      - name: customer_version_id
+        description: dbt_scd_id of the matching customer version.
+        data_tests:
+          - not_null

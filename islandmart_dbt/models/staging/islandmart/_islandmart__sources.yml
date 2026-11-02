@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: islandmart
+    schema: raw_islandmart
+    description: IslandMart's app database (Postgres), loaded raw into DuckDB by dlt (python/dlt_islandmart_postgres.py)
+    tables:
+      - name: products
+      - name: customers
+      - name: sales

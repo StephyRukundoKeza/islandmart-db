@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: stg_islandmart__products
+    description: One row per product. A duplicated product_id in the raw data is reduced to its most recently updated row.
+    columns:
+      - name: product_id
+        description: Product identifier from the IslandMart app.
+        data_tests:
+          - unique
+          - not_null
+      - name: price_mur
+        description: Price in Mauritian rupees.
+
+  - name: stg_islandmart__sales
+    description: One row per sale line, with clean types.
+    columns:
+      - name: sale_id
+        data_tests:
+          - unique
+          - not_null
+      - name: product_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_islandmart__products')
+                field: product_id
+      - name: customer_id
+        data_tests:
+          - not_null
+
+  - name: stg_islandmart__customers
+    description: One row per customer. Names and phone numbers are removed and the email is hashed (privacy).
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: email_hash
+        description: MD5 hash of the lower-cased email, so customers can be matched without storing the email.
+        data_tests:
+          - not_null
+      - name: loyalty_tier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Bronze', 'Silver', 'Gold']
+
+unit_tests:
+  - name: test_products_keeps_latest_duplicate
+    description: When a product_id appears twice, staging keeps the most recently updated row and trims the name.
+    model: stg_islandmart__products
+    given:
+      - input: source('islandmart', 'products')
+        rows:
+          - {product_id: 7, name: "Old Name", category: "Snacks", price_mur: 50, stock_qty: 10, last_updated: "2026-09-01"}
+          - {product_id: 7, name: "New Name", category: "Snacks", price_mur: 55, stock_qty: 8, last_updated: "2026-10-01"}
+          - {product_id: 8, name: "  Vanilla Tea  ", category: "Drinks", price_mur: 120, stock_qty: 5, last_updated: "2026-10-02"}
+    expect:
+      rows:
+        - {product_id: 7, product_name: "New Name", price_mur: 55}
+        - {product_id: 8, product_name: "Vanilla Tea", price_mur: 120}
