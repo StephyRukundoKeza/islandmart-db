@@ -1,10 +1,56 @@
 # IslandMart DB
-IslandMart is a fictional goods shop in Mauritius, so this project was built to practice using Docker to run a database and connect multiple database GUIs to it. In this case, we have pgAdmin and DBeaver, both connected to one PostgreSQL database. It also loads cleaned data in the database using one of the 3 pipeline design types,two out the 3 pipeline designs which are, ETL and ELT. 
 
-Next, I've been able to use a mock API to pull dummy store entries, so as to see practically how to fetch the data page by page (pagination) and save it as JSON files.
+IslandMart is a fictional goods shop in Mauritius, so this project was built to practise using Docker to run a database and connect multiple database GUIs to it. In this case, we have pgAdmin and DBeaver, both connected to one PostgreSQL database. It also loads and cleans data in the database using two of the 3 pipeline designs, which are ETL and ELT, and it uses Airflow to have everything automated.
 
 ## Stack
 Postgres 17 and pgAdmin in Docker Compose, Python (pandas + SQLAlchemy + requests + pyarrow + PyYAML), dlt, dbt, DuckDB, uv.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    api[DummyJSON API] --> dltA[dlt: dlt_dummyjson.py]
+    pg[(Postgres app DB: products, customers, sales)] --> dltB[dlt: dlt_islandmart_postgres.py]
+    dltA --> raw[(DuckDB raw tables)]
+    dltB --> raw
+    raw --> stg[dbt staging]
+    stg --> snap[dbt snapshot: customers SCD2]
+    stg --> int[dbt intermediate]
+    snap --> int
+    seeds[dbt seeds: stores, holidays] --> marts
+    int --> marts[dbt marts: fct_orders + dims]
+    marts --> dash[Streamlit dashboard]
+    airflow{{Airflow DAG, daily}} -. runs .-> dltA
+    airflow -. runs .-> dltB
+    airflow -. runs .-> stg
+```
+
+## Quick start
+
+1. Copy `.env.example` to `.env` and fill in the values
+2. `uv sync`
+3. `make up`, then run `sql/00_setup_sales.sql` and `sql/01_setup_customers.sql` in Postgres
+4. `make all` (load with dlt, build and test with dbt)
+5. `make dashboard`, then open http://localhost:8501
+6. Optional, to schedule it: `make airflow-build`, `make airflow-up`, then turn on `islandmart_elt_daily` at http://localhost:8080
+
+## Folder structure
+
+    islandmart-db/
+    ├── airflow/            Airflow 3: custom image (Dockerfile), DAG in dags/
+    ├── contracts/          data contract for the supplier products
+    ├── docs/               star schema diagram, Month 1 retrospective
+    ├── islandmart_dbt/     dbt project: staging, intermediate, marts, snapshots, seeds, tests
+    ├── python/             dlt pipelines, dashboard, Dagster, and earlier learning scripts
+    ├── sql/                Postgres setup scripts and SQL practice
+    ├── docker-compose.yml  IslandMart Postgres + pgAdmin
+    └── Makefile            shortcuts (make help)
+
+## Data quality and reliability
+- dbt tests: unique, not_null, accepted_values, relationships, singular tests (amount = quantity x price, one current version per customer, raw vs staging row counts, valid quantities and prices), a unit test, and a warning for products never sold.
+- Airflow: tasks run in order, 2 retries each, one run at a time (DuckDB allows one writer), and an alert written to `logs/airflow_alerts.log` when a task fails for good.
+- Logging: the dlt pipelines write to `logs/pipeline.log`.
+
 
 ## Pipeline design: ETL (products CSV)
 For loading the products CSV (`load_products.py`), the reason why I used ETL, instead of Zero-ETL or ELT, was because I was not planning in any way to use the data which I omitted. So, cleaning the data and having it in my database clean seemed more convenient for me.
@@ -238,19 +284,18 @@ erDiagram
 ## Orchestration: Airflow vs Dagster
 
 I scheduled the same IslandMart pipeline with both tools:
-- Airflow: `airflow/dags/islandmart_dlt_daily.py` runs the dlt pipeline daily in Docker (official docker-compose, Airflow 3.3.2).
+- Airflow: `airflow/dags/islandmart_elt_daily.py` runs the dlt and dbt pipeline daily in Docker (official docker-compose, Airflow 3.3.2).
 - Dagster: `python/dagster_defs.py` runs dlt and dbt as assets (`dagster-dlt` + `dagster-dbt`).
 
 What I noticed:
 1. Running Dagster was faster than Airflow, and the reason is that Dagster is lighter compared to Airflow. In my setup, it doesn't need Docker; it runs locally on my PC, and it runs the dlt and dbt work automatically, because it reads my dlt source and dbt project by itself.
 2. I also learned that Airflow is better as a scheduler of anything, beyond dealing with data, while Dagster is designed mainly for data.
+3. I also learned that Airflow doesn't run directly on Windows, so I ran it with Docker, while Dagster ran straight from my project.
 
 In conclusion, I'd go with Dagster if all I wanted to schedule/automate were data jobs, but use Airflow when I want to be able to schedule other things too.
 
-3. Also I learned that Airflow doesn’t run directly on Windows, so I ran it with Docker, while Dagster ran straight from my project.
-
 How to run:
-- Airflow: `cd airflow`, `docker compose up -d`, then trigger `islandmart_dlt_daily` at http://localhost:8080
+- Airflow: `cd airflow`, `docker compose up -d`, then trigger `islandmart_elt_daily` at http://localhost:8080
 - Dagster: `uv run dagster dev -f python/dagster_defs.py`, then open http://localhost:3000
 
 ## Mini-project 1: end-to-end ELT pipeline

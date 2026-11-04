@@ -1,5 +1,6 @@
 """dlt pipeline: DummyJSON products API -> DuckDB, loading only products that changed since the last run."""
 import os
+import logging
 from pathlib import Path
 
 import dlt
@@ -33,16 +34,29 @@ def products(
 def dummyjson_source():
     return products
 
-
 if __name__ == "__main__":
+    Path("logs").mkdir(exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[logging.FileHandler("logs/pipeline.log"), logging.StreamHandler()],
+    )
+    logger = logging.getLogger("dummyjson")
+
     Path(DUCKDB_PATH).parent.mkdir(parents=True, exist_ok=True)
     pipeline = dlt.pipeline(
         pipeline_name="dummyjson",
         destination=dlt.destinations.duckdb(DUCKDB_PATH),
         dataset_name="raw_dummyjson",
     )
-    load_info = pipeline.run(dummyjson_source())
-    print(load_info)
+
+    logger.info("Starting load")
+    try:
+        load_info = pipeline.run(dummyjson_source())
+    except Exception:
+        logger.exception("Load failed")
+        raise
+    logger.info(load_info)
 
     normalize = pipeline.last_trace.last_normalize_info
-    print("Rows loaded per table:", normalize.row_counts if normalize else {})
+    logger.info("Rows loaded per table: %s", normalize.row_counts if normalize else {})

@@ -2,6 +2,7 @@
 
 import os
 import argparse
+import logging
 from pathlib import Path
 
 import dlt
@@ -35,19 +36,35 @@ def islandmart_source():
     return products, customers, sales
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--refresh", action="store_true",
-         help="Drop the raw tables and bookmarks, then reload everything from Postgres",
-    )
-    args = parser.parse_args()
-
-    Path(DUCKDB_PATH).parent.mkdir(parents=True, exist_ok=True)
-    pipeline = dlt.pipeline(
-        pipeline_name="islandmart_postgres",
-        destination=dlt.destinations.duckdb(DUCKDB_PATH),
-        dataset_name="raw_islandmart",
+       parser = argparse.ArgumentParser(description=__doc__)
+       parser.add_argument(
+           "--refresh", action="store_true",
+           help="Drop the raw tables and bookmarks, then reload everything from Postgres",
        )
-    print(pipeline.run(islandmart_source(), refresh="drop_sources" if args.refresh else None))
-    normalize = pipeline.last_trace.last_normalize_info
-    print("Rows loaded per table:", normalize.row_counts if normalize else {})
+       args = parser.parse_args()
+
+       Path("logs").mkdir(exist_ok=True)
+       logging.basicConfig(
+           level=logging.INFO,
+           format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+           handlers=[logging.FileHandler("logs/pipeline.log"), logging.StreamHandler()],
+       )
+       logger = logging.getLogger("islandmart_postgres")
+
+       Path(DUCKDB_PATH).parent.mkdir(parents=True, exist_ok=True)
+       pipeline = dlt.pipeline(
+           pipeline_name="islandmart_postgres",
+           destination=dlt.destinations.duckdb(DUCKDB_PATH),
+           dataset_name="raw_islandmart",
+       )
+
+       logger.info("Starting load (refresh=%s)", args.refresh)
+       try:
+           load_info = pipeline.run(islandmart_source(), refresh="drop_sources" if args.refresh else None)
+       except Exception:
+           logger.exception("Load failed")
+           raise
+       logger.info(load_info)
+
+       normalize = pipeline.last_trace.last_normalize_info
+       logger.info("Rows loaded per table: %s", normalize.row_counts if normalize else {})
