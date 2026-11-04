@@ -1,13 +1,13 @@
 # IslandMart DB
-IslandMart is a fictional goods shop in Mauritius, so this project was built to practice using Docker to run a database and connect multiple database GUIs to it. In this case, we have pgAdmin and DBeaver, both connected to one PostgreSQL database. It also loads cleaned data in the database using one of the 3 pipeline design types, which is ETL.
+IslandMart is a fictional goods shop in Mauritius, so this project was built to practice using Docker to run a database and connect multiple database GUIs to it. In this case, we have pgAdmin and DBeaver, both connected to one PostgreSQL database. It also loads cleaned data in the database using one of the 3 pipeline design types,two out the 3 pipeline designs which are, ETL and ELT. 
 
 Next, I've been able to use a mock API to pull dummy store entries, so as to see practically how to fetch the data page by page (pagination) and save it as JSON files.
 
 ## Stack
 Postgres 17 and pgAdmin in Docker Compose, Python (pandas + SQLAlchemy + requests + pyarrow + PyYAML), dlt, dbt, DuckDB, uv.
 
-## Pipeline design: ETL
-The reason why I used ETL, instead of Zero-ETL or ELT, was because I was not planning in any way to use the data which I omitted. So, cleaning the data and having it in my database clean seems more convenient for me.
+## Pipeline design: ETL (products CSV)
+For loading the products CSV (`load_products.py`), the reason why I used ETL, instead of Zero-ETL or ELT, was because I was not planning in any way to use the data which I omitted. So, cleaning the data and having it in my database clean seemed more convenient for me.
 
 ## How to run
 1. Copy `.env.example` to `.env` and fill in the values
