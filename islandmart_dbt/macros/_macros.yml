@@ -1,0 +1,9 @@
+version: 2
+
+macros:
+  - name: date_key
+    description: Turns a date into an integer key like 20261104, used to join facts to dim_date.
+    arguments:
+      - name: date_column
+        type: string
+        description: Name of the date column to convert.

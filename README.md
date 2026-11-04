@@ -168,3 +168,69 @@ The reason tests were added to this project is to make it easy to catch mistakes
 3. `uv run python/dlt_islandmart_postgres.py`
 4. `cd islandmart_dbt`, then `dbt seed` and `dbt build`
 5. `dbt docs generate` and `dbt docs serve` to see the lineage
+
+## Data model
+
+Below, I have represented what the star schema looks like. This is done to help the users of the data, like analysts, to query it more easily and faster.
+
+```mermaid
+erDiagram
+    DIM_DATE ||--o{ FCT_ORDERS : "date_key"
+    DIM_PRODUCT ||--o{ FCT_ORDERS : "product_key"
+    DIM_STORE ||--o{ FCT_ORDERS : "store_key"
+    DIM_CUSTOMER ||--o{ FCT_ORDERS : "customer_key"
+
+    FCT_ORDERS {
+        BIGINT sale_id PK "degenerate dimension"
+        INT date_key FK
+        INT product_key FK
+        INT store_key FK
+        VARCHAR customer_key FK "customer version on the sale date"
+        INT quantity
+        NUMERIC unit_price_mur
+        NUMERIC sales_amount_mur
+    }
+    DIM_DATE {
+        INT date_key PK "e.g. 20261104"
+        DATE full_date
+        VARCHAR day_name
+        VARCHAR month_name
+        BOOLEAN is_weekend
+        BOOLEAN is_public_holiday "from the Mauritius holidays seed"
+    }
+    DIM_PRODUCT {
+        INT product_key PK
+        VARCHAR product_name
+        VARCHAR category
+        NUMERIC price_mur
+    }
+    DIM_STORE {
+        INT store_key PK
+        VARCHAR store_name
+        VARCHAR town
+        VARCHAR district
+    }
+    DIM_CUSTOMER {
+        VARCHAR customer_key PK "one per version (SCD2)"
+        INT customer_id
+        VARCHAR email_hash
+        VARCHAR town
+        VARCHAR district
+        VARCHAR loyalty_tier
+        TIMESTAMP valid_from
+        TIMESTAMP valid_to
+        BOOLEAN is_current
+    }
+```
+
+- **Grain of `fct_orders`:** one row per product line in a sale.
+- **Keys:** products, stores and dates use their own IDs as keys. Customers use a surrogate key (one per version), because a customer can have several versions.
+- **Incremental:** `fct_orders` only adds sales with a `sale_id` higher than the last one loaded, so a daily run doesn't rebuild 200,000+ rows.
+- **Macro:** `date_key()` builds the date key the same way in `dim_date` and `fct_orders`.
+
+### NB
+- Inside the `fct_orders` table, I used an incremental model, but not in my dimension tables. This is because the fact table is big and keeps growing, since new sales are added constantly, while the dimension tables are small and quick to rebuild. Changes in customers' details are handled by the snapshot instead.
+
+  Hence, to minimise the processing time, the incremental model only loads information that hadn't been loaded before.
+
+- Another important change I added is the macro for `date_key`. The reason is to avoid rewriting the same code that turns dates into numbers.

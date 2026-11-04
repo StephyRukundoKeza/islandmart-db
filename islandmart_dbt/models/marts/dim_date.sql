@@ -12,7 +12,7 @@ holidays as (
 )
 
 select
-    cast(strftime(days.full_date, '%Y%m%d') as integer) as date_key,
+    {{ date_key('days.full_date') }} as date_key,
     days.full_date,
     dayname(days.full_date)              as day_name,
     month(days.full_date)                as month,
