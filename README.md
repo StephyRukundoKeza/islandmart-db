@@ -234,3 +234,21 @@ erDiagram
   Hence, to minimise the processing time, the incremental model only loads information that hadn't been loaded before.
 
 - Another important change I added is the macro for `date_key`. The reason is to avoid rewriting the same code that turns dates into numbers.
+
+## Orchestration: Airflow vs Dagster
+
+I scheduled the same IslandMart pipeline with both tools:
+- Airflow: `airflow/dags/islandmart_dlt_daily.py` runs the dlt pipeline daily in Docker (official docker-compose, Airflow 3.3.2).
+- Dagster: `python/dagster_defs.py` runs dlt and dbt as assets (`dagster-dlt` + `dagster-dbt`).
+
+What I noticed:
+1. Running Dagster was faster than Airflow, and the reason is that Dagster is lighter compared to Airflow. In my setup, it doesn't need Docker; it runs locally on my PC, and it runs the dlt and dbt work automatically, because it reads my dlt source and dbt project by itself.
+2. I also learned that Airflow is better as a scheduler of anything, beyond dealing with data, while Dagster is designed mainly for data.
+
+In conclusion, I'd go with Dagster if all I wanted to schedule/automate were data jobs, but use Airflow when I want to be able to schedule other things too.
+
+3. Also I learned that Airflow doesn’t run directly on Windows, so I ran it with Docker, while Dagster ran straight from my project.
+
+How to run:
+- Airflow: `cd airflow`, `docker compose up -d`, then trigger `islandmart_dlt_daily` at http://localhost:8080
+- Dagster: `uv run dagster dev -f python/dagster_defs.py`, then open http://localhost:3000

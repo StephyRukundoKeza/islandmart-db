@@ -7,3 +7,6 @@ __pycache__/
 *.pyc
 warehouse/
 *.duckdb
+airflow/logs/
+airflow/config/airflow.cfg
+.tmp_dagster_home_*/
