@@ -252,3 +252,24 @@ In conclusion, I'd go with Dagster if all I wanted to schedule/automate were dat
 How to run:
 - Airflow: `cd airflow`, `docker compose up -d`, then trigger `islandmart_dlt_daily` at http://localhost:8080
 - Dagster: `uv run dagster dev -f python/dagster_defs.py`, then open http://localhost:3000
+
+## Mini-project 1: end-to-end ELT pipeline
+
+At the end, I was able to finish my first data engineering project with IslandMart DB, which fetches data saved in Postgres and from the DummyJSON API, and uses Airflow to automate the whole pipeline. That is, Airflow is the scheduler I have added, so that the extraction, loading and transformation (staging, intermediate and marts) are done automatically at a set time, and the dashboard (Streamlit) always shows the fresh data.
+
+It's also important to note that I set it up in a way that if an error happens (i.e. a process fails), the task is retried twice, and if it still fails, the next steps don't run. Instead, it reports which task failed, and the specific error can be found in that task's log.
+
+Below are the processes that are now happening automatically:
+
+    Airflow DAG islandmart_elt_daily (daily)
+      load_dummyjson_api -> load_postgres_to_duckdb -> dbt_build -> dbt_test
+      Streamlit dashboard reads the marts from warehouse/islandmart.duckdb
+
+- `airflow/dags/islandmart_elt_daily.py`: 4 tasks in order, 2 retries each, and an alert when a task fails for good (written to the task log and `logs/airflow_alerts.log`).
+- `airflow/Dockerfile` + `airflow/requirements.txt`: Airflow runs from a custom Docker image with dlt and dbt pre-installed, instead of installing packages at every start.
+- `python/dashboard.py`: Streamlit dashboard with revenue, revenue per month, revenue by district, holidays vs normal days, and the top 10 products.
+
+How to run:
+1. `docker compose up -d` (IslandMart Postgres)
+2. `cd airflow`, `docker compose build` (first time only), `docker compose up -d`, then trigger `islandmart_elt_daily` at http://localhost:8080
+3. `uv run streamlit run python/dashboard.py`, then open http://localhost:8501
